@@ -32,6 +32,34 @@
       <div id="results" class="results-grid" aria-label="Book search results"></div>
     </section>
 
+    <!-- Reading Goal Section -->
+    <section class="reading-goal-section">
+      <div class="goal-container">
+        <div class="goal-input-area">
+          <h2>📖 Reading Goal</h2>
+          <div class="goal-input-group">
+            <input
+              type="number"
+              id="goalInput"
+              class="goal-input"
+              placeholder="Enter target number of books"
+              min="1"
+              aria-label="Reading goal target"
+            >
+            <button id="setGoalBtn" class="btn btn-set-goal">Set Goal</button>
+          </div>
+        </div>
+        <div id="goalDisplay" class="goal-display" style="display: none;">
+          <div class="goal-info">
+            <span id="goalProgress" class="goal-progress-text">0 / 0 books read</span>
+          </div>
+          <div class="progress-bar-container">
+            <div id="progressBar" class="progress-bar-fill"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Reading List Section -->
     <section class="reading-list-section">
       <h2>My Reading List</h2>

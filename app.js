@@ -36,6 +36,11 @@ const searchInput = document.getElementById('searchInput');
 const searchBtn = document.getElementById('searchBtn');
 const resultsDiv = document.getElementById('results');
 const readingListDiv = document.getElementById('reading-list');
+const goalInput = document.getElementById('goalInput');
+const setGoalBtn = document.getElementById('setGoalBtn');
+const goalDisplay = document.getElementById('goalDisplay');
+const progressBar = document.getElementById('progressBar');
+const goalProgress = document.getElementById('goalProgress');
 
 // ========================================
 // Event Listeners
@@ -44,6 +49,8 @@ const readingListDiv = document.getElementById('reading-list');
 document.addEventListener('DOMContentLoaded', () => {
   // Load reading list on page load
   loadReadingList();
+  // Load reading goal from localStorage
+  loadReadingGoal();
 });
 
 searchBtn.addEventListener('click', async () => {
@@ -61,6 +68,23 @@ searchInput.addEventListener('keypress', async (event) => {
       resultsDiv.innerHTML = '<p class="empty-state">Searching…</p>';
       await searchBooks(query);
     }
+  }
+});
+
+setGoalBtn.addEventListener('click', () => {
+  const target = parseInt(goalInput.value, 10);
+  if (target > 0) {
+    saveReadingGoal(target);
+    goalInput.value = '';
+    updateGoalDisplay();
+  } else {
+    alert('Please enter a number greater than 0');
+  }
+});
+
+goalInput.addEventListener('keypress', (event) => {
+  if (event.key === 'Enter') {
+    setGoalBtn.click();
   }
 });
 
@@ -267,6 +291,9 @@ function renderReadingList(books) {
 
     readingListDiv.appendChild(article);
   });
+
+  // Update goal display after rendering
+  updateGoalDisplay();
 }
 
 // ========================================
@@ -289,6 +316,52 @@ function placeholderEl() {
   div.className = 'book-cover-placeholder';
   div.textContent = '📚';
   return div;
+}
+
+// ========================================
+// Function: saveReadingGoal
+// ========================================
+
+function saveReadingGoal(target) {
+  localStorage.setItem('readingGoal', JSON.stringify({ target, setAt: new Date().toISOString() }));
+}
+
+// ========================================
+// Function: loadReadingGoal
+// ========================================
+
+function loadReadingGoal() {
+  const goalData = localStorage.getItem('readingGoal');
+  if (goalData) {
+    updateGoalDisplay();
+  }
+}
+
+// ========================================
+// Function: updateGoalDisplay
+// ========================================
+
+function updateGoalDisplay() {
+  const goalData = localStorage.getItem('readingGoal');
+  if (!goalData) {
+    goalDisplay.style.display = 'none';
+    return;
+  }
+
+  const { target } = JSON.parse(goalData);
+  goalDisplay.style.display = 'block';
+
+  // Count books with status "read"
+  const readBooks = Array.from(readingListDiv.querySelectorAll('.status-badge.read')).length;
+  const percentage = Math.min((readBooks / target) * 100, 100);
+
+  progressBar.style.width = percentage + '%';
+  goalProgress.textContent = `${readBooks} / ${target} books read`;
+
+  // Optional: Add celebration emoji when goal is reached
+  if (readBooks >= target) {
+    goalProgress.textContent = `🎉 ${readBooks} / ${target} books read - Goal Achieved!`;
+  }
 }
 
 // ========================================

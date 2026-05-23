@@ -353,6 +353,135 @@ section {
 }
 
 /* ========================================
+   Reading Goal Section
+   ======================================== */
+
+.reading-goal-section {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  padding: 2rem 1.5rem;
+  border-radius: 0.75rem;
+  margin-bottom: 2.5rem;
+  color: white;
+}
+
+.goal-container {
+  max-width: 600px;
+}
+
+.reading-goal-section h2 {
+  color: white;
+  margin-bottom: 1.5rem;
+}
+
+.goal-input-area {
+  margin-bottom: 1.5rem;
+}
+
+.goal-input-group {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.goal-input {
+  flex: 1;
+  min-width: 150px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.goal-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.goal-input:focus {
+  outline: none;
+  border-color: white;
+  background-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+}
+
+.btn-set-goal {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid white;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-set-goal:hover {
+  background-color: white;
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.btn-set-goal:active {
+  transform: scale(0.98);
+}
+
+.goal-display {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.goal-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.goal-progress-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 24px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--success) 0%, #27ae60 100%);
+  width: 0%;
+  transition: width 0.5s ease;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(42, 157, 143, 0.4);
+}
+
+@media (max-width: 600px) {
+  .goal-input-group {
+    flex-direction: column;
+  }
+
+  .goal-input {
+    min-width: auto;
+  }
+
+  .btn-set-goal {
+    width: 100%;
+  }
+}
+
+/* ========================================
    Empty State
    ======================================== */
 
