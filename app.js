@@ -41,12 +41,23 @@ const setGoalBtn = document.getElementById('setGoalBtn');
 const goalDisplay = document.getElementById('goalDisplay');
 const progressBar = document.getElementById('progressBar');
 const goalProgress = document.getElementById('goalProgress');
+const shelfInput = document.getElementById('shelfInput');
+const createShelfBtn = document.getElementById('createShelfBtn');
+const shelvesList = document.getElementById('shelves');
+
+// Default shelves
+const DEFAULT_SHELVES = ['Want to Read', 'Read'];
+const SHELVES_STORAGE_KEY = 'bookFinderShelves';
 
 // ========================================
 // Event Listeners
 // ========================================
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize shelves
+  initializeShelves();
+  // Load and render shelves
+  renderShelves();
   // Load reading list on page load
   loadReadingList();
   // Load reading goal from localStorage
@@ -85,6 +96,23 @@ setGoalBtn.addEventListener('click', () => {
 goalInput.addEventListener('keypress', (event) => {
   if (event.key === 'Enter') {
     setGoalBtn.click();
+  }
+});
+
+createShelfBtn.addEventListener('click', () => {
+  const shelfName = shelfInput.value.trim();
+  if (shelfName && shelfName.length > 0) {
+    addShelf(shelfName);
+    shelfInput.value = '';
+    renderShelves();
+  } else {
+    alert('Please enter a shelf name');
+  }
+});
+
+shelfInput.addEventListener('keypress', (event) => {
+  if (event.key === 'Enter') {
+    createShelfBtn.click();
   }
 });
 
@@ -189,7 +217,7 @@ async function saveBook(book) {
       author: book.author,
       year: book.year,
       coverId: book.coverId,
-      status: 'want-to-read',
+      shelf: 'Want to Read',
       savedAt: new Date().toISOString()
     };
 
@@ -229,16 +257,15 @@ async function loadReadingList() {
 // Function: toggleStatus
 // ========================================
 
-async function toggleStatus(docId, currentStatus) {
+async function updateBookShelf(docId, newShelf) {
   try {
-    const newStatus = currentStatus === 'want-to-read' ? 'read' : 'want-to-read';
     const docRef = doc(db, COLLECTION, docId);
-    await updateDoc(docRef, { status: newStatus });
-    console.log('Status updated successfully');
+    await updateDoc(docRef, { shelf: newShelf });
+    console.log('Shelf updated successfully');
     await loadReadingList();
   } catch (error) {
-    console.error('Error updating status:', error);
-    alert('Failed to update status. Please try again.');
+    console.error('Error updating shelf:', error);
+    alert('Failed to update shelf. Please try again.');
   }
 }
 
@@ -253,47 +280,189 @@ function renderReadingList(books) {
   }
 
   readingListDiv.innerHTML = '';
+  const shelves = getShelves();
+  
+  // Organize books by shelf
+  const booksByShelf = {};
+  shelves.forEach(shelf => {
+    booksByShelf[shelf] = [];
+  });
 
   books.forEach(book => {
-    const article = document.createElement('article');
-    article.className = 'book-card';
-    article.setAttribute('aria-label', `${book.title} by ${book.author}, status: ${book.status}`);
+    const shelf = book.shelf || 'Want to Read';
+    if (!booksByShelf[shelf]) {
+      booksByShelf[shelf] = [];
+    }
+    booksByShelf[shelf].push(book);
+  });
 
-    const coverUrl = buildCoverUrl(book.coverId);
-    const coverElement = coverUrl
-      ? `<img src="${coverUrl}" alt="Cover of ${book.title}" class="book-cover">`
-      : placeholderEl().outerHTML;
+  // Render each shelf group
+  shelves.forEach(shelf => {
+    const shelfBooks = booksByShelf[shelf];
+    const shelfGroup = document.createElement('div');
+    shelfGroup.className = 'shelf-group';
 
-    const statusLabel = book.status === 'want-to-read' ? 'Want to Read' : 'Read';
-    const statusClass = book.status;
+    const shelfTitle = document.createElement('h3');
+    shelfTitle.className = 'shelf-group-title';
+    shelfTitle.textContent = shelf;
 
-    article.innerHTML = `
-      <div class="book-cover-container">
-        ${coverElement}
-      </div>
-      <div class="book-info">
-        <h3 class="book-title">${escapeHtml(book.title)}</h3>
-        <p class="book-author">by ${escapeHtml(book.author)}</p>
-        <p class="book-year">${book.year}</p>
-        <div class="book-actions">
-          <button class="btn status-badge ${statusClass}" data-doc-id="${book.id}" data-status="${book.status}">
-            ${statusLabel}
-          </button>
-        </div>
-      </div>
-    `;
+    shelfGroup.appendChild(shelfTitle);
 
-    // Add click handler to status button
-    const statusBtn = article.querySelector('.status-badge');
-    statusBtn.addEventListener('click', async () => {
-      await toggleStatus(book.id, book.status);
-    });
+    if (!shelfBooks || shelfBooks.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'shelf-empty';
+      empty.textContent = `No books in "${shelf}" yet`;
+      shelfGroup.appendChild(empty);
+    } else {
+      const booksDiv = document.createElement('div');
+      booksDiv.className = 'shelf-group-books';
 
-    readingListDiv.appendChild(article);
+      shelfBooks.forEach(book => {
+        const article = document.createElement('article');
+        article.className = 'book-card';
+        article.setAttribute('aria-label', `${book.title} by ${book.author}`);
+
+        const coverUrl = buildCoverUrl(book.coverId);
+        const coverElement = coverUrl
+          ? `<img src="${coverUrl}" alt="Cover of ${book.title}" class="book-cover">`
+          : placeholderEl().outerHTML;
+
+        article.innerHTML = `
+          <div class="book-cover-container">
+            ${coverElement}
+          </div>
+          <div class="book-info">
+            <h3 class="book-title">${escapeHtml(book.title)}</h3>
+            <p class="book-author">by ${escapeHtml(book.author)}</p>
+            <p class="book-year">${book.year}</p>
+            <div class="book-actions" id="actions-${book.id}">
+              <select class="shelf-select" data-doc-id="${book.id}" aria-label="Move book to shelf">
+                ${shelves.map(s => `<option value="${s}" ${s === book.shelf ? 'selected' : ''}>${s}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+        `;
+
+        const shelfSelect = article.querySelector('.shelf-select');
+        shelfSelect.addEventListener('change', async (e) => {
+          await updateBookShelf(book.id, e.target.value);
+        });
+
+        booksDiv.appendChild(article);
+      });
+
+      shelfGroup.appendChild(booksDiv);
+    }
+
+    readingListDiv.appendChild(shelfGroup);
   });
 
   // Update goal display after rendering
   updateGoalDisplay();
+}
+
+// ========================================
+// Function: initializeShelves
+// ========================================
+
+function initializeShelves() {
+  const stored = localStorage.getItem(SHELVES_STORAGE_KEY);
+  if (!stored) {
+    localStorage.setItem(SHELVES_STORAGE_KEY, JSON.stringify(DEFAULT_SHELVES));
+  }
+}
+
+// ========================================
+// Function: getShelves
+// ========================================
+
+function getShelves() {
+  const stored = localStorage.getItem(SHELVES_STORAGE_KEY);
+  return stored ? JSON.parse(stored) : DEFAULT_SHELVES;
+}
+
+// ========================================
+// Function: addShelf
+// ========================================
+
+function addShelf(shelfName) {
+  const shelves = getShelves();
+  if (!shelves.includes(shelfName)) {
+    shelves.push(shelfName);
+    localStorage.setItem(SHELVES_STORAGE_KEY, JSON.stringify(shelves));
+  }
+}
+
+// ========================================
+// Function: removeShelf
+// ========================================
+
+function removeShelf(shelfName) {
+  // Don't allow removing default shelves
+  if (DEFAULT_SHELVES.includes(shelfName)) {
+    alert('Cannot remove default shelves');
+    return;
+  }
+  const shelves = getShelves();
+  const index = shelves.indexOf(shelfName);
+  if (index > -1) {
+    shelves.splice(index, 1);
+    localStorage.setItem(SHELVES_STORAGE_KEY, JSON.stringify(shelves));
+    // Move books from removed shelf to "Want to Read"
+    moveShelfBooks(shelfName, 'Want to Read');
+  }
+}
+
+// ========================================
+// Function: moveShelfBooks
+// ========================================
+
+async function moveShelfBooks(oldShelf, newShelf) {
+  try {
+    const snapshot = await getDocs(collection(db, COLLECTION));
+    snapshot.forEach(async (docSnap) => {
+      if (docSnap.data().shelf === oldShelf) {
+        await updateDoc(doc(db, COLLECTION, docSnap.id), { shelf: newShelf });
+      }
+    });
+  } catch (error) {
+    console.error('Error moving shelf books:', error);
+  }
+}
+
+// ========================================
+// Function: renderShelves
+// ========================================
+
+function renderShelves() {
+  const shelves = getShelves();
+  shelvesList.innerHTML = '';
+
+  shelves.forEach(shelf => {
+    const tag = document.createElement('div');
+    tag.className = 'shelf-tag';
+    if (DEFAULT_SHELVES.includes(shelf)) {
+      tag.classList.add('default');
+    }
+    tag.innerHTML = `
+      ${shelf}
+      ${!DEFAULT_SHELVES.includes(shelf) ? '<button class="remove-shelf" aria-label="Remove shelf">×</button>' : ''}
+    `;
+
+    if (!DEFAULT_SHELVES.includes(shelf)) {
+      const removeBtn = tag.querySelector('.remove-shelf');
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm(`Remove shelf "${shelf}"? Books will move to "Want to Read".`)) {
+          removeShelf(shelf);
+          renderShelves();
+          loadReadingList();
+        }
+      });
+    }
+
+    shelvesList.appendChild(tag);
+  });
 }
 
 // ========================================
@@ -351,8 +520,8 @@ function updateGoalDisplay() {
   const { target } = JSON.parse(goalData);
   goalDisplay.style.display = 'block';
 
-  // Count books with status "read"
-  const readBooks = Array.from(readingListDiv.querySelectorAll('.status-badge.read')).length;
+  // Count books in "Read" shelf
+  const readBooks = Array.from(readingListDiv.querySelectorAll('.shelf-select')).filter(select => select.value === 'Read').length;
   const percentage = Math.min((readBooks / target) * 100, 100);
 
   progressBar.style.width = percentage + '%';

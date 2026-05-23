@@ -60,10 +60,28 @@
       </div>
     </section>
 
+    <!-- Shelf Management Section -->
+    <section class="shelf-management-section">
+      <h2>📚 My Shelves</h2>
+      <div class="shelf-controls">
+        <div class="shelf-input-group">
+          <input
+            type="text"
+            id="shelfInput"
+            class="shelf-input"
+            placeholder="Create a new shelf (e.g. Favourites, Borrowed)…"
+            aria-label="New shelf name"
+          >
+          <button id="createShelfBtn" class="btn btn-create-shelf">Add Shelf</button>
+        </div>
+        <div id="shelves" class="shelves-list" aria-label="Available shelves"></div>
+      </div>
+    </section>
+
     <!-- Reading List Section -->
     <section class="reading-list-section">
-      <h2>My Reading List</h2>
-      <div id="reading-list" class="reading-list-grid" aria-label="Saved books"></div>
+      <h2>Reading List by Shelf</h2>
+      <div id="reading-list" class="reading-list-by-shelf" aria-label="Saved books by shelf"></div>
     </section>
   </main>
 
