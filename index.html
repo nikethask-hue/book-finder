@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📚 Book Finder</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header>
+    <h1>📚 Book Finder</h1>
+  </header>
+
+  <main>
+    <!-- Search Section -->
+    <section class="search-section">
+      <div class="search-bar">
+        <input
+          type="text"
+          id="searchInput"
+          class="search-input"
+          placeholder="Search books or authors…"
+          aria-label="Search for books or authors"
+        >
+        <button id="searchBtn" class="search-button">Search</button>
+      </div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="results-section">
+      <h2>Search Results</h2>
+      <div id="results" class="results-grid" aria-label="Book search results"></div>
+    </section>
+
+    <!-- Reading List Section -->
+    <section class="reading-list-section">
+      <h2>My Reading List</h2>
+      <div id="reading-list" class="reading-list-grid" aria-label="Saved books"></div>
+    </section>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

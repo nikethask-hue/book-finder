@@ -1,0 +1,414 @@
+/* ========================================
+   CSS Custom Properties (Variables)
+   ======================================== */
+
+:root {
+  --bg: #f8f9fa;
+  --surface: #ffffff;
+  --primary: #1f7a8c;
+  --primary-light: #2a9caf;
+  --secondary: #e76f51;
+  --secondary-light: #f4a261;
+  --success: #2a9d8f;
+  --warning: #e76f51;
+  --text: #264653;
+  --text-muted: #6b7280;
+  --border: #e5e7eb;
+  --shadow: rgba(0, 0, 0, 0.08);
+  --shadow-md: rgba(0, 0, 0, 0.12);
+}
+
+/* ========================================
+   Reset and Base Styles
+   ======================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* ========================================
+   Typography
+   ======================================== */
+
+h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--text);
+}
+
+p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+/* ========================================
+   Header
+   ======================================== */
+
+header {
+  background-color: var(--surface);
+  border-bottom: 2px solid var(--border);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px var(--shadow);
+}
+
+header h1 {
+  text-align: center;
+  color: var(--primary);
+}
+
+/* ========================================
+   Main and Sections
+   ======================================== */
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem 2rem 1rem;
+}
+
+section {
+  margin-bottom: 3rem;
+}
+
+/* ========================================
+   Search Bar (Mobile-First)
+   ======================================== */
+
+.search-section {
+  margin-bottom: 2.5rem;
+}
+
+.search-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.search-input {
+  flex: 1;
+  padding: 0.875rem 1rem;
+  font-size: 1rem;
+  border: 2px solid var(--border);
+  border-radius: 0.5rem;
+  background-color: var(--surface);
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(31, 122, 140, 0.1);
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-button {
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.search-button:hover {
+  background-color: var(--primary-light);
+  box-shadow: 0 4px 8px var(--shadow-md);
+}
+
+.search-button:active {
+  transform: scale(0.98);
+}
+
+.search-button:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Desktop: search bar side by side */
+@media (min-width: 640px) {
+  .search-bar {
+    flex-direction: row;
+    gap: 0.75rem;
+  }
+
+  .search-input {
+    flex: 1;
+  }
+
+  .search-button {
+    flex-shrink: 0;
+    width: auto;
+  }
+}
+
+/* ========================================
+   Results and Reading List Grids
+   ======================================== */
+
+.results-section,
+.reading-list-section {
+  background-color: var(--surface);
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+}
+
+.results-section h2,
+.reading-list-section h2 {
+  margin-top: 0;
+}
+
+.results-grid,
+.reading-list-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+/* Mobile: single column */
+@media (min-width: 640px) {
+  .results-grid,
+  .reading-list-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Desktop: 3+ columns */
+@media (min-width: 1024px) {
+  .results-grid,
+  .reading-list-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ========================================
+   Book Cards
+   ======================================== */
+
+.book-card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 2px 4px var(--shadow);
+  transition: all 0.2s ease;
+}
+
+.book-card:hover {
+  box-shadow: 0 4px 12px var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Book Cover */
+.book-cover-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--border);
+  height: 200px;
+  overflow: hidden;
+}
+
+.book-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.book-cover-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--border) 0%, var(--primary-light) 100%);
+  color: white;
+  font-size: 3rem;
+  font-weight: 700;
+}
+
+/* Book Info */
+.book-info {
+  padding: 1.25rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.book-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.book-author {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.book-year {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+/* ========================================
+   Buttons and Status Badges
+   ======================================== */
+
+.book-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: auto;
+}
+
+.btn {
+  flex: 1;
+  padding: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  text-decoration: none;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px var(--shadow);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:focus {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+/* Save Button */
+.btn-save {
+  background-color: var(--primary);
+  color: white;
+}
+
+.btn-save:hover {
+  background-color: var(--primary-light);
+}
+
+/* Status Badge / Toggle Button */
+.status-badge {
+  background-color: var(--warning);
+  color: white;
+}
+
+.status-badge.want-to-read {
+  background-color: var(--warning);
+}
+
+.status-badge.read {
+  background-color: var(--success);
+}
+
+.status-badge:hover {
+  opacity: 0.9;
+}
+
+/* ========================================
+   Empty State
+   ======================================== */
+
+.empty-state {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+/* ========================================
+   Accessibility and Responsive
+   ======================================== */
+
+@media (max-width: 375px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  .book-card {
+    border-radius: 0.5rem;
+  }
+
+  .book-info {
+    padding: 1rem;
+  }
+
+  main {
+    padding: 0 0.75rem 1.5rem 0.75rem;
+  }
+
+  section {
+    margin-bottom: 2rem;
+  }
+}
+
+/* Focus visible for keyboard navigation */
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
