@@ -1,4 +1,52 @@
 /* ========================================
+   Music Player Footer
+   ======================================== */
+
+.music-footer {
+  width: 100%;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -2px 8px var(--shadow);
+  padding: 1.25rem 0 1.5rem 0;
+  display: flex;
+  justify-content: center;
+}
+
+.music-player-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 900px;
+  width: 100%;
+}
+
+.music-audio {
+  width: 100%;
+  max-width: 350px;
+  outline: none;
+  border-radius: 0.5rem;
+  background: var(--surface);
+  box-shadow: 0 2px 6px var(--shadow);
+}
+
+.music-caption {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.music-caption a {
+  color: var(--primary);
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.music-caption a:hover,
+.music-caption a:focus {
+  color: var(--primary-light);
+}
+/* ========================================
    CSS Custom Properties (Variables)
    ======================================== */
 
