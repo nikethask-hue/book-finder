@@ -74,9 +74,99 @@ header {
   box-shadow: 0 2px 4px var(--shadow);
 }
 
+header .header-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
 header h1 {
-  text-align: center;
   color: var(--primary);
+  margin: 0;
+}
+
+.auth-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.auth-status {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.btn-auth {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: var(--secondary);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-auth:hover,
+.btn-auth:focus {
+  background-color: var(--secondary-light);
+  outline: none;
+}
+
+.btn-auth.signed-in {
+  background-color: var(--warning);
+}
+
+.btn-auth-secondary {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: var(--primary);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-auth-secondary:hover,
+.btn-auth-secondary:focus {
+  background-color: var(--primary-light);
+  outline: none;
+}
+
+.email-auth-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  justify-content: center;
+}
+
+.auth-input {
+  min-width: 180px;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border);
+  border-radius: 0.5rem;
+  background-color: var(--surface);
+  color: var(--text);
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(31, 122, 140, 0.1);
+}
+
+@media (min-width: 640px) {
+  header .header-top {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .email-auth-bar {
+    justify-content: flex-end;
+  }
 }
 
 /* ========================================
@@ -383,6 +473,80 @@ section {
   padding: 0.5rem;
 }
 
+/* Star/Favorite Button */
+.btn-favorite {
+  background-color: transparent;
+  color: var(--text-muted);
+  border: 2px solid var(--border);
+  padding: 0.625rem 0.75rem;
+  font-size: 1.25rem;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+}
+
+.btn-favorite:hover {
+  border-color: var(--secondary);
+  color: var(--secondary);
+}
+
+.btn-favorite.starred {
+  background-color: var(--secondary-light);
+  border-color: var(--secondary);
+  color: white;
+}
+
+.btn-favorite:focus {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+}
+
+/* Delete Button */
+.btn-delete {
+  background-color: transparent;
+  color: var(--text-muted);
+  border: 2px solid var(--border);
+  padding: 0.625rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+}
+
+.btn-delete:hover {
+  background-color: #fee;
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+.btn-delete:active {
+  transform: scale(0.95);
+}
+
+.btn-delete:focus {
+  outline: 2px solid var(--warning);
+  outline-offset: 2px;
+}
+
+/* Book Actions Layout */
+.book-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
 /* ========================================
    Reading Goal Section
    ======================================== */
@@ -527,6 +691,67 @@ section {
 .shelf-management-section h2 {
   margin-top: 0;
   margin-bottom: 1.5rem;
+}
+
+/* Book Stats */
+.book-stats {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  color: white;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0.9;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  display: block;
+}
+
+/* Sort Controls */
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.sort-select {
+  padding: 0.625rem 0.875rem;
+  font-size: 0.95rem;
+  border: 2px solid var(--border);
+  border-radius: 0.5rem;
+  background-color: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(31, 122, 140, 0.1);
 }
 
 .shelf-controls {

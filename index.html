@@ -8,7 +8,31 @@
 </head>
 <body>
   <header>
-    <h1>📚 Book Finder</h1>
+    <div class="header-top">
+      <h1>📚 Book Finder</h1>
+      <div class="auth-bar">
+        <p id="authStatus" class="auth-status">Not signed in</p>
+        <button id="authButton" class="btn btn-auth">Sign in with Google</button>
+      </div>
+    </div>
+    <div class="email-auth-bar">
+      <input
+        type="email"
+        id="emailInput"
+        class="auth-input"
+        placeholder="Email"
+        aria-label="Email address"
+      >
+      <input
+        type="password"
+        id="passwordInput"
+        class="auth-input"
+        placeholder="Password"
+        aria-label="Password"
+      >
+      <button id="emailSignInBtn" class="btn btn-auth-secondary">Email Sign In</button>
+      <button id="emailRegisterBtn" class="btn btn-auth-secondary">Register</button>
+    </div>
   </header>
 
   <main>
@@ -63,6 +87,40 @@
     <!-- Shelf Management Section -->
     <section class="shelf-management-section">
       <h2>📚 My Shelves</h2>
+      
+      <!-- Stats Section -->
+      <div id="bookStats" class="book-stats" style="display: none;">
+        <div class="stats-row">
+          <div class="stat-item">
+            <span class="stat-label">Total Books</span>
+            <span id="totalBooksCount" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Read</span>
+            <span id="readCount" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Want to Read</span>
+            <span id="wantToReadCount" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Favourites</span>
+            <span id="favCount" class="stat-value">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sort Controls -->
+      <div class="sort-controls">
+        <label for="sortSelect">Sort by:</label>
+        <select id="sortSelect" class="sort-select" aria-label="Sort books by">
+          <option value="date-desc">Date Added (Newest)</option>
+          <option value="date-asc">Date Added (Oldest)</option>
+          <option value="title">Title (A-Z)</option>
+          <option value="author">Author (A-Z)</option>
+        </select>
+      </div>
+      
       <div class="shelf-controls">
         <div class="shelf-input-group">
           <input

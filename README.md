@@ -54,7 +54,11 @@ Give the app a nickname (e.g. `book-finder-web`)
 Check the box for "Also set up Firebase Hosting" — this is optional but useful
 Click Register app
 Firebase will show you a `firebaseConfig` object — keep this page open, you'll need it in Step 4
-2c. Create a Firestore database
+2c. Enable Authentication
+In the left sidebar, click Build → Authentication
+Choose Sign-in method
+Enable Google and Email/Password, then save each provider
+2d. Create a Firestore database
 In the left sidebar, click Build → Firestore Database
 Click Create database
 Choose Start in test mode (this lets anyone read/write for 30 days — fine for development)
@@ -94,7 +98,7 @@ python -m http.server 8080
 Then open `http://localhost:8080` in your browser.
 What to check
 Type a book title or author name into the search bar and press Enter
-Results should appear with cover images
+Sign in with Google or use the email/password fields at the top
 Click Save on a result — it should appear in your reading list below
 Click the status button to toggle between Want to Read and Read
 Refresh the page — your saved books should still be there (fetched from Firestore)

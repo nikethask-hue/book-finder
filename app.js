@@ -9,8 +9,18 @@ import {
   addDoc,
   getDocs,
   updateDoc,
+  deleteDoc,
   doc
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 // Import Firebase config
 import { firebaseConfig } from './firebase-config.js';
@@ -21,6 +31,9 @@ import { firebaseConfig } from './firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+let currentUser = null;
 
 // ========================================
 // Constants
@@ -36,6 +49,12 @@ const searchInput = document.getElementById('searchInput');
 const searchBtn = document.getElementById('searchBtn');
 const resultsDiv = document.getElementById('results');
 const readingListDiv = document.getElementById('reading-list');
+const authStatus = document.getElementById('authStatus');
+const authButton = document.getElementById('authButton');
+const emailInput = document.getElementById('emailInput');
+const passwordInput = document.getElementById('passwordInput');
+const emailSignInBtn = document.getElementById('emailSignInBtn');
+const emailRegisterBtn = document.getElementById('emailRegisterBtn');
 const goalInput = document.getElementById('goalInput');
 const setGoalBtn = document.getElementById('setGoalBtn');
 const goalDisplay = document.getElementById('goalDisplay');
@@ -44,24 +63,23 @@ const goalProgress = document.getElementById('goalProgress');
 const shelfInput = document.getElementById('shelfInput');
 const createShelfBtn = document.getElementById('createShelfBtn');
 const shelvesList = document.getElementById('shelves');
+const sortSelect = document.getElementById('sortSelect');
+const bookStats = document.getElementById('bookStats');
 
 // Default shelves
 const DEFAULT_SHELVES = ['Want to Read', 'Read'];
 const SHELVES_STORAGE_KEY = 'bookFinderShelves';
+const SORT_STORAGE_KEY = 'bookFinderSort';
 
 // ========================================
 // Event Listeners
 // ========================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize shelves
   initializeShelves();
-  // Load and render shelves
   renderShelves();
-  // Load reading list on page load
-  loadReadingList();
-  // Load reading goal from localStorage
   loadReadingGoal();
+  setupAuthListeners();
 });
 
 searchBtn.addEventListener('click', async () => {
@@ -70,6 +88,22 @@ searchBtn.addEventListener('click', async () => {
     resultsDiv.innerHTML = '<p class="empty-state">Searching…</p>';
     await searchBooks(query);
   }
+});
+
+authButton.addEventListener('click', async () => {
+  if (currentUser) {
+    await signOutUser();
+  } else {
+    await signIn();
+  }
+});
+
+emailSignInBtn.addEventListener('click', async () => {
+  await emailSignIn();
+});
+
+emailRegisterBtn.addEventListener('click', async () => {
+  await emailRegister();
 });
 
 searchInput.addEventListener('keypress', async (event) => {
@@ -115,6 +149,113 @@ shelfInput.addEventListener('keypress', (event) => {
     createShelfBtn.click();
   }
 });
+
+sortSelect.addEventListener('change', (e) => {
+  localStorage.setItem(SORT_STORAGE_KEY, e.target.value);
+  loadReadingList();
+});
+
+function getUserCollection() {
+  if (!currentUser) {
+    throw new Error('No authenticated user');
+  }
+  return collection(db, 'users', currentUser.uid, COLLECTION);
+}
+
+function updateAuthUi(user) {
+  if (user) {
+    authStatus.textContent = `Signed in as ${user.displayName || user.email}`;
+    authButton.textContent = 'Sign out';
+    authButton.classList.add('signed-in');
+  } else {
+    authStatus.textContent = 'Not signed in';
+    authButton.textContent = 'Sign in with Google';
+    authButton.classList.remove('signed-in');
+  }
+}
+
+function setupAuthListeners() {
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    updateAuthUi(user);
+    loadReadingList();
+  });
+}
+
+async function signIn() {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (error) {
+    console.error('Sign in failed:', error);
+    alert('Could not sign in. Please try again.');
+  }
+}
+
+async function signOutUser() {
+  try {
+    await signOut(auth);
+    currentUser = null;
+    updateAuthUi(null);
+    loadReadingList();
+  } catch (error) {
+    console.error('Sign out failed:', error);
+    alert('Could not sign out. Please try again.');
+  }
+}
+
+async function emailSignIn() {
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+
+  if (!email || !password) {
+    alert('Enter both email and password to sign in.');
+    return;
+  }
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    emailInput.value = '';
+    passwordInput.value = '';
+  } catch (error) {
+    console.error('Email sign in failed:', error);
+    if (error.code === 'auth/wrong-password') {
+      alert('Incorrect password. Please try again.');
+    } else if (error.code === 'auth/user-not-found') {
+      alert('No account found for that email. Please register first.');
+    } else if (error.code === 'auth/invalid-email') {
+      alert('Please enter a valid email address.');
+    } else {
+      alert('Could not sign in. Please try again.');
+    }
+  }
+}
+
+async function emailRegister() {
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+
+  if (!email || !password) {
+    alert('Enter both email and password to register.');
+    return;
+  }
+
+  try {
+    await createUserWithEmailAndPassword(auth, email, password);
+    emailInput.value = '';
+    passwordInput.value = '';
+  } catch (error) {
+    console.error('Email registration failed:', error);
+    if (error.code === 'auth/email-already-in-use') {
+      alert('That email is already in use. Please sign in instead.');
+    } else if (error.code === 'auth/invalid-email') {
+      alert('Please enter a valid email address.');
+    } else if (error.code === 'auth/weak-password') {
+      alert('Password should be at least 6 characters.');
+    } else {
+      alert('Could not register. Please try again.');
+    }
+  }
+}
 
 // ========================================
 // Function: searchBooks
@@ -211,6 +352,11 @@ function renderResults(books) {
 // ========================================
 
 async function saveBook(book) {
+  if (!currentUser) {
+    alert('Please sign in to save books and access your reading list.');
+    return;
+  }
+
   try {
     const bookData = {
       title: book.title,
@@ -218,10 +364,11 @@ async function saveBook(book) {
       year: book.year,
       coverId: book.coverId,
       shelf: 'Want to Read',
+      starred: false,
       savedAt: new Date().toISOString()
     };
 
-    await addDoc(collection(db, COLLECTION), bookData);
+    await addDoc(getUserCollection(), bookData);
     console.log('Book saved successfully');
     await loadReadingList();
   } catch (error) {
@@ -235,8 +382,14 @@ async function saveBook(book) {
 // ========================================
 
 async function loadReadingList() {
+  if (!currentUser) {
+    readingListDiv.innerHTML = '<p class="empty-state">Sign in to view your reading list and saved books.</p>';
+    bookStats.style.display = 'none';
+    return;
+  }
+
   try {
-    const snapshot = await getDocs(collection(db, COLLECTION));
+    const snapshot = await getDocs(getUserCollection());
     const books = [];
 
     snapshot.forEach(doc => {
@@ -258,8 +411,13 @@ async function loadReadingList() {
 // ========================================
 
 async function updateBookShelf(docId, newShelf) {
+  if (!currentUser) {
+    alert('Please sign in to update your reading list.');
+    return;
+  }
+
   try {
-    const docRef = doc(db, COLLECTION, docId);
+    const docRef = doc(getUserCollection(), docId);
     await updateDoc(docRef, { shelf: newShelf });
     console.log('Shelf updated successfully');
     await loadReadingList();
@@ -276,8 +434,16 @@ async function updateBookShelf(docId, newShelf) {
 function renderReadingList(books) {
   if (!books || books.length === 0) {
     readingListDiv.innerHTML = '<p class="empty-state">📖 Your reading list is empty. Save some books to get started!</p>';
+    bookStats.style.display = 'none';
     return;
   }
+
+  // Calculate and display stats
+  updateStats(books);
+
+  // Sort books
+  const sortBy = localStorage.getItem(SORT_STORAGE_KEY) || 'date-desc';
+  const sortedBooks = sortBooks(books, sortBy);
 
   readingListDiv.innerHTML = '';
   const shelves = getShelves();
@@ -288,7 +454,7 @@ function renderReadingList(books) {
     booksByShelf[shelf] = [];
   });
 
-  books.forEach(book => {
+  sortedBooks.forEach(book => {
     const shelf = book.shelf || 'Want to Read';
     if (!booksByShelf[shelf]) {
       booksByShelf[shelf] = [];
@@ -339,6 +505,12 @@ function renderReadingList(books) {
               <select class="shelf-select" data-doc-id="${book.id}" aria-label="Move book to shelf">
                 ${shelves.map(s => `<option value="${s}" ${s === book.shelf ? 'selected' : ''}>${s}</option>`).join('')}
               </select>
+              <button class="btn-favorite ${book.starred ? 'starred' : ''}" data-doc-id="${book.id}" title="Add to favorites" aria-label="Toggle favorite">
+                ${book.starred ? '⭐' : '☆'}
+              </button>
+              <button class="btn-delete" data-doc-id="${book.id}" title="Delete book" aria-label="Delete book">
+                ✕
+              </button>
             </div>
           </div>
         `;
@@ -346,6 +518,18 @@ function renderReadingList(books) {
         const shelfSelect = article.querySelector('.shelf-select');
         shelfSelect.addEventListener('change', async (e) => {
           await updateBookShelf(book.id, e.target.value);
+        });
+
+        const favoriteBtn = article.querySelector('.btn-favorite');
+        favoriteBtn.addEventListener('click', async () => {
+          await toggleFavorite(book.id, book.starred);
+        });
+
+        const deleteBtn = article.querySelector('.btn-delete');
+        deleteBtn.addEventListener('click', async () => {
+          if (confirm(`Delete "${book.title}"?`)) {
+            await deleteBook(book.id);
+          }
         });
 
         booksDiv.appendChild(article);
@@ -359,6 +543,91 @@ function renderReadingList(books) {
 
   // Update goal display after rendering
   updateGoalDisplay();
+}
+
+// ========================================
+// Function: deleteBook
+// ========================================
+
+async function deleteBook(docId) {
+  if (!currentUser) {
+    alert('Please sign in to delete books.');
+    return;
+  }
+
+  try {
+    await deleteDoc(doc(getUserCollection(), docId));
+    console.log('Book deleted successfully');
+    await loadReadingList();
+  } catch (error) {
+    console.error('Error deleting book:', error);
+    alert('Failed to delete book. Please try again.');
+  }
+}
+
+// ========================================
+// Function: toggleFavorite
+// ========================================
+
+async function toggleFavorite(docId, currentStarred) {
+  if (!currentUser) {
+    alert('Please sign in to update favorites.');
+    return;
+  }
+
+  try {
+    const docRef = doc(getUserCollection(), docId);
+    await updateDoc(docRef, { starred: !currentStarred });
+    console.log('Favorite toggled successfully');
+    await loadReadingList();
+  } catch (error) {
+    console.error('Error toggling favorite:', error);
+    alert('Failed to update favorite. Please try again.');
+  }
+}
+
+// ========================================
+// Function: sortBooks
+// ========================================
+
+function sortBooks(books, sortBy) {
+  const sorted = [...books];
+  
+  switch (sortBy) {
+    case 'title':
+      sorted.sort((a, b) => a.title.localeCompare(b.title));
+      break;
+    case 'author':
+      sorted.sort((a, b) => a.author.localeCompare(b.author));
+      break;
+    case 'date-asc':
+      sorted.sort((a, b) => new Date(a.savedAt) - new Date(b.savedAt));
+      break;
+    case 'date-desc':
+    default:
+      sorted.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+      break;
+  }
+  
+  return sorted;
+}
+
+// ========================================
+// Function: updateStats
+// ========================================
+
+function updateStats(books) {
+  const total = books.length;
+  const readCount = books.filter(b => b.shelf === 'Read').length;
+  const wantToReadCount = books.filter(b => b.shelf === 'Want to Read').length;
+  const favCount = books.filter(b => b.starred).length;
+
+  document.getElementById('totalBooksCount').textContent = total;
+  document.getElementById('readCount').textContent = readCount;
+  document.getElementById('wantToReadCount').textContent = wantToReadCount;
+  document.getElementById('favCount').textContent = favCount;
+
+  bookStats.style.display = 'block';
 }
 
 // ========================================
@@ -418,11 +687,15 @@ function removeShelf(shelfName) {
 // ========================================
 
 async function moveShelfBooks(oldShelf, newShelf) {
+  if (!currentUser) {
+    return;
+  }
+
   try {
-    const snapshot = await getDocs(collection(db, COLLECTION));
+    const snapshot = await getDocs(getUserCollection());
     snapshot.forEach(async (docSnap) => {
       if (docSnap.data().shelf === oldShelf) {
-        await updateDoc(doc(db, COLLECTION, docSnap.id), { shelf: newShelf });
+        await updateDoc(doc(getUserCollection(), docSnap.id), { shelf: newShelf });
       }
     });
   } catch (error) {
