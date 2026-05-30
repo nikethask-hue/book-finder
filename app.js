@@ -81,6 +81,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 searchBtn.addEventListener('click', async () => {
+  if (!currentUser) {
+    alert('Please sign in to search for books.');
+    return;
+  }
+
   const query = searchInput.value.trim();
   if (query) {
     resultsDiv.innerHTML = '<p class="empty-state">Searching…</p>';
@@ -129,6 +134,11 @@ shareBtn.addEventListener('click', async () => {
 
 searchInput.addEventListener('keypress', async (event) => {
   if (event.key === 'Enter') {
+    if (!currentUser) {
+      alert('Please sign in to search for books.');
+      return;
+    }
+
     const query = searchInput.value.trim();
     if (query) {
       resultsDiv.innerHTML = '<p class="empty-state">Searching…</p>';
@@ -139,6 +149,11 @@ searchInput.addEventListener('keypress', async (event) => {
 
 
 sortSelect.addEventListener('change', (e) => {
+  if (!currentUser) {
+    e.target.value = localStorage.getItem(SORT_STORAGE_KEY) || 'date-desc';
+    return;
+  }
+
   localStorage.setItem(SORT_STORAGE_KEY, e.target.value);
   loadReadingList();
 });
@@ -172,6 +187,27 @@ function updateAuthUi(user) {
     authStatus.textContent = 'Not signed in';
     authButton.textContent = 'Sign in with Google';
     authButton.classList.remove('signed-in');
+  }
+
+  updateFeatureAccess(user);
+}
+
+function updateFeatureAccess(user) {
+  const enabled = Boolean(user);
+
+  searchInput.disabled = !enabled;
+  searchBtn.disabled = !enabled;
+  sortSelect.disabled = !enabled;
+  shareBtn.disabled = !enabled;
+
+  searchInput.placeholder = enabled
+    ? 'Search books or authors…'
+    : 'Sign in to search books…';
+
+  if (!enabled) {
+    resultsDiv.innerHTML = '<p class="empty-state">Sign in to search books.</p>';
+    readingListDiv.innerHTML = '<p class="empty-state">Sign in to view your reading list and saved books.</p>';
+    bookStats.style.display = 'none';
   }
 }
 
