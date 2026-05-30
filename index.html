@@ -15,6 +15,7 @@
         <button id="authButton" class="btn btn-auth">Sign in with Google</button>
       </div>
     </div>
+    <p id="shareBanner" class="share-banner" hidden>Viewing a shared reading list.</p>
     <div class="email-auth-bar">
       <input
         type="email"
@@ -56,39 +57,20 @@
       <div id="results" class="results-grid" aria-label="Book search results"></div>
     </section>
 
-    <!-- Reading Goal Section -->
-    <section class="reading-goal-section">
-      <div class="goal-container">
-        <div class="goal-input-area">
-          <h2>📖 Reading Goal</h2>
-          <div class="goal-input-group">
-            <input
-              type="number"
-              id="goalInput"
-              class="goal-input"
-              placeholder="Enter target number of books"
-              min="1"
-              aria-label="Reading goal target"
-            >
-            <button id="setGoalBtn" class="btn btn-set-goal">Set Goal</button>
-          </div>
-        </div>
-        <div id="goalDisplay" class="goal-display" style="display: none;">
-          <div class="goal-info">
-            <span id="goalProgress" class="goal-progress-text">0 / 0 books read</span>
-          </div>
-          <div class="progress-bar-container">
-            <div id="progressBar" class="progress-bar-fill"></div>
-          </div>
+    <!-- Reading List Section -->
+    <section class="reading-list-section">
+      <div class="reading-list-header">
+        <h2>Reading List</h2>
+        <div class="sort-controls">
+          <label for="sortSelect">Sort by:</label>
+          <select id="sortSelect" class="sort-select" aria-label="Sort books by">
+            <option value="date-desc">Date Added (Newest)</option>
+            <option value="date-asc">Date Added (Oldest)</option>
+            <option value="title">Title (A-Z)</option>
+            <option value="author">Author (A-Z)</option>
+          </select>
         </div>
       </div>
-    </section>
-
-    <!-- Shelf Management Section -->
-    <section class="shelf-management-section">
-      <h2>📚 My Shelves</h2>
-      
-      <!-- Stats Section -->
       <div id="bookStats" class="book-stats" style="display: none;">
         <div class="stats-row">
           <div class="stat-item">
@@ -109,37 +91,14 @@
           </div>
         </div>
       </div>
-
-      <!-- Sort Controls -->
-      <div class="sort-controls">
-        <label for="sortSelect">Sort by:</label>
-        <select id="sortSelect" class="sort-select" aria-label="Sort books by">
-          <option value="date-desc">Date Added (Newest)</option>
-          <option value="date-asc">Date Added (Oldest)</option>
-          <option value="title">Title (A-Z)</option>
-          <option value="author">Author (A-Z)</option>
-        </select>
-      </div>
-      
-      <div class="shelf-controls">
-        <div class="shelf-input-group">
-          <input
-            type="text"
-            id="shelfInput"
-            class="shelf-input"
-            placeholder="Create a new shelf (e.g. Favourites, Borrowed)…"
-            aria-label="New shelf name"
-          >
-          <button id="createShelfBtn" class="btn btn-create-shelf">Add Shelf</button>
-        </div>
-        <div id="shelves" class="shelves-list" aria-label="Available shelves"></div>
-      </div>
+      <div id="reading-list" class="reading-list-grid" aria-label="Saved books"></div>
     </section>
-
-    <!-- Reading List Section -->
-    <section class="reading-list-section">
-      <h2>Reading List by Shelf</h2>
-      <div id="reading-list" class="reading-list-by-shelf" aria-label="Saved books by shelf"></div>
+    <section id="shareSection" class="share-section">
+      <div class="share-container">
+        <p class="share-text">Share a reading list — generate a simple shareable link or a readable page of your saved books.</p>
+        <button id="shareBtn" class="btn btn-share">Generate share link</button>
+        <p id="shareMessage" class="share-message" aria-live="polite"></p>
+      </div>
     </section>
   </main>
 

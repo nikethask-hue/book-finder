@@ -55,20 +55,18 @@ const emailInput = document.getElementById('emailInput');
 const passwordInput = document.getElementById('passwordInput');
 const emailSignInBtn = document.getElementById('emailSignInBtn');
 const emailRegisterBtn = document.getElementById('emailRegisterBtn');
-const goalInput = document.getElementById('goalInput');
-const setGoalBtn = document.getElementById('setGoalBtn');
-const goalDisplay = document.getElementById('goalDisplay');
-const progressBar = document.getElementById('progressBar');
-const goalProgress = document.getElementById('goalProgress');
-const shelfInput = document.getElementById('shelfInput');
-const createShelfBtn = document.getElementById('createShelfBtn');
-const shelvesList = document.getElementById('shelves');
 const sortSelect = document.getElementById('sortSelect');
 const bookStats = document.getElementById('bookStats');
+const shareBtn = document.getElementById('shareBtn');
+const shareMessage = document.getElementById('shareMessage');
+const shareSection = document.getElementById('shareSection');
+const shareBanner = document.getElementById('shareBanner');
 
-// Default shelves
+let sharedUserId = null;
+let isShareView = false;
+
+// Status options
 const DEFAULT_SHELVES = ['Want to Read', 'Read'];
-const SHELVES_STORAGE_KEY = 'bookFinderShelves';
 const SORT_STORAGE_KEY = 'bookFinderSort';
 
 // ========================================
@@ -76,9 +74,9 @@ const SORT_STORAGE_KEY = 'bookFinderSort';
 // ========================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  initializeShelves();
-  renderShelves();
-  loadReadingGoal();
+  sharedUserId = new URLSearchParams(window.location.search).get('share');
+  isShareView = Boolean(sharedUserId);
+  setShareView();
   setupAuthListeners();
 });
 
@@ -106,6 +104,29 @@ emailRegisterBtn.addEventListener('click', async () => {
   await emailRegister();
 });
 
+shareBtn.addEventListener('click', async () => {
+  if (!currentUser) {
+    alert('Sign in to generate a shareable reading list link.');
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  url.searchParams.set('share', currentUser.uid);
+  const shareUrl = url.toString();
+
+  try {
+    await navigator.clipboard.writeText(shareUrl);
+    shareMessage.textContent = 'Shareable link copied to clipboard.';
+  } catch (error) {
+    console.error('Copy failed:', error);
+    shareMessage.textContent = shareUrl;
+  }
+
+  setTimeout(() => {
+    shareMessage.textContent = '';
+  }, 5000);
+});
+
 searchInput.addEventListener('keypress', async (event) => {
   if (event.key === 'Enter') {
     const query = searchInput.value.trim();
@@ -116,39 +137,6 @@ searchInput.addEventListener('keypress', async (event) => {
   }
 });
 
-setGoalBtn.addEventListener('click', () => {
-  const target = parseInt(goalInput.value, 10);
-  if (target > 0) {
-    saveReadingGoal(target);
-    goalInput.value = '';
-    updateGoalDisplay();
-  } else {
-    alert('Please enter a number greater than 0');
-  }
-});
-
-goalInput.addEventListener('keypress', (event) => {
-  if (event.key === 'Enter') {
-    setGoalBtn.click();
-  }
-});
-
-createShelfBtn.addEventListener('click', () => {
-  const shelfName = shelfInput.value.trim();
-  if (shelfName && shelfName.length > 0) {
-    addShelf(shelfName);
-    shelfInput.value = '';
-    renderShelves();
-  } else {
-    alert('Please enter a shelf name');
-  }
-});
-
-shelfInput.addEventListener('keypress', (event) => {
-  if (event.key === 'Enter') {
-    createShelfBtn.click();
-  }
-});
 
 sortSelect.addEventListener('change', (e) => {
   localStorage.setItem(SORT_STORAGE_KEY, e.target.value);
@@ -160,6 +148,19 @@ function getUserCollection() {
     throw new Error('No authenticated user');
   }
   return collection(db, 'users', currentUser.uid, COLLECTION);
+}
+
+function getSharedCollection() {
+  return collection(db, 'users', sharedUserId, COLLECTION);
+}
+
+function setShareView() {
+  if (shareSection) {
+    shareSection.style.display = isShareView ? 'none' : 'flex';
+  }
+  if (shareBanner) {
+    shareBanner.hidden = !isShareView;
+  }
 }
 
 function updateAuthUi(user) {
@@ -178,7 +179,11 @@ function setupAuthListeners() {
   onAuthStateChanged(auth, (user) => {
     currentUser = user;
     updateAuthUi(user);
-    loadReadingList();
+    if (isShareView) {
+      loadSharedReadingList();
+    } else {
+      loadReadingList();
+    }
   });
 }
 
@@ -406,6 +411,30 @@ async function loadReadingList() {
   }
 }
 
+async function loadSharedReadingList() {
+  if (!sharedUserId) {
+    return;
+  }
+
+  try {
+    const snapshot = await getDocs(getSharedCollection());
+    const books = [];
+
+    snapshot.forEach(doc => {
+      books.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+
+    renderReadingList(books, true);
+  } catch (error) {
+    console.error('Error loading shared reading list:', error);
+    readingListDiv.innerHTML = '<p class="empty-state">Unable to load shared reading list.</p>';
+    bookStats.style.display = 'none';
+  }
+}
+
 // ========================================
 // Function: toggleStatus
 // ========================================
@@ -431,118 +460,78 @@ async function updateBookShelf(docId, newShelf) {
 // Function: renderReadingList
 // ========================================
 
-function renderReadingList(books) {
+function renderReadingList(books, readOnly = false) {
   if (!books || books.length === 0) {
     readingListDiv.innerHTML = '<p class="empty-state">📖 Your reading list is empty. Save some books to get started!</p>';
     bookStats.style.display = 'none';
     return;
   }
 
-  // Calculate and display stats
   updateStats(books);
 
-  // Sort books
   const sortBy = localStorage.getItem(SORT_STORAGE_KEY) || 'date-desc';
   const sortedBooks = sortBooks(books, sortBy);
 
   readingListDiv.innerHTML = '';
-  const shelves = getShelves();
-  
-  // Organize books by shelf
-  const booksByShelf = {};
-  shelves.forEach(shelf => {
-    booksByShelf[shelf] = [];
-  });
 
   sortedBooks.forEach(book => {
-    const shelf = book.shelf || 'Want to Read';
-    if (!booksByShelf[shelf]) {
-      booksByShelf[shelf] = [];
-    }
-    booksByShelf[shelf].push(book);
-  });
+    const article = document.createElement('article');
+    article.className = 'book-card';
+    article.setAttribute('aria-label', `${book.title} by ${book.author}`);
 
-  // Render each shelf group
-  shelves.forEach(shelf => {
-    const shelfBooks = booksByShelf[shelf];
-    const shelfGroup = document.createElement('div');
-    shelfGroup.className = 'shelf-group';
+    const coverUrl = buildCoverUrl(book.coverId);
+    const coverElement = coverUrl
+      ? `<img src="${coverUrl}" alt="Cover of ${book.title}" class="book-cover">`
+      : placeholderEl().outerHTML;
 
-    const shelfTitle = document.createElement('h3');
-    shelfTitle.className = 'shelf-group-title';
-    shelfTitle.textContent = shelf;
+    const statusText = book.shelf || 'Want to Read';
+    const favoriteLabel = book.starred ? '<span class="book-fav-label">⭐ Favorite</span>' : '';
 
-    shelfGroup.appendChild(shelfTitle);
+    article.innerHTML = `
+      <div class="book-cover-container">
+        ${coverElement}
+      </div>
+      <div class="book-info">
+        <h3 class="book-title">${escapeHtml(book.title)}</h3>
+        <p class="book-author">by ${escapeHtml(book.author)}</p>
+        <p class="book-year">${book.year}</p>
+        <div class="book-actions" id="actions-${book.id}">
+          ${readOnly ? `<span class="book-status">Status: ${escapeHtml(statusText)}</span>${favoriteLabel}` : `
+            <select class="shelf-select" data-doc-id="${book.id}" aria-label="Set book status">
+              ${DEFAULT_SHELVES.map(s => `<option value="${s}" ${s === book.shelf ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+            <button class="btn-favorite ${book.starred ? 'starred' : ''}" data-doc-id="${book.id}" title="Add to favorites" aria-label="Toggle favorite">
+              ${book.starred ? '⭐' : '☆'}
+            </button>
+            <button class="btn-delete" data-doc-id="${book.id}" title="Delete book" aria-label="Delete book">
+              ✕
+            </button>
+          `}
+        </div>
+      </div>
+    `;
 
-    if (!shelfBooks || shelfBooks.length === 0) {
-      const empty = document.createElement('p');
-      empty.className = 'shelf-empty';
-      empty.textContent = `No books in "${shelf}" yet`;
-      shelfGroup.appendChild(empty);
-    } else {
-      const booksDiv = document.createElement('div');
-      booksDiv.className = 'shelf-group-books';
-
-      shelfBooks.forEach(book => {
-        const article = document.createElement('article');
-        article.className = 'book-card';
-        article.setAttribute('aria-label', `${book.title} by ${book.author}`);
-
-        const coverUrl = buildCoverUrl(book.coverId);
-        const coverElement = coverUrl
-          ? `<img src="${coverUrl}" alt="Cover of ${book.title}" class="book-cover">`
-          : placeholderEl().outerHTML;
-
-        article.innerHTML = `
-          <div class="book-cover-container">
-            ${coverElement}
-          </div>
-          <div class="book-info">
-            <h3 class="book-title">${escapeHtml(book.title)}</h3>
-            <p class="book-author">by ${escapeHtml(book.author)}</p>
-            <p class="book-year">${book.year}</p>
-            <div class="book-actions" id="actions-${book.id}">
-              <select class="shelf-select" data-doc-id="${book.id}" aria-label="Move book to shelf">
-                ${shelves.map(s => `<option value="${s}" ${s === book.shelf ? 'selected' : ''}>${s}</option>`).join('')}
-              </select>
-              <button class="btn-favorite ${book.starred ? 'starred' : ''}" data-doc-id="${book.id}" title="Add to favorites" aria-label="Toggle favorite">
-                ${book.starred ? '⭐' : '☆'}
-              </button>
-              <button class="btn-delete" data-doc-id="${book.id}" title="Delete book" aria-label="Delete book">
-                ✕
-              </button>
-            </div>
-          </div>
-        `;
-
-        const shelfSelect = article.querySelector('.shelf-select');
-        shelfSelect.addEventListener('change', async (e) => {
-          await updateBookShelf(book.id, e.target.value);
-        });
-
-        const favoriteBtn = article.querySelector('.btn-favorite');
-        favoriteBtn.addEventListener('click', async () => {
-          await toggleFavorite(book.id, book.starred);
-        });
-
-        const deleteBtn = article.querySelector('.btn-delete');
-        deleteBtn.addEventListener('click', async () => {
-          if (confirm(`Delete "${book.title}"?`)) {
-            await deleteBook(book.id);
-          }
-        });
-
-        booksDiv.appendChild(article);
+    if (!readOnly) {
+      const shelfSelect = article.querySelector('.shelf-select');
+      shelfSelect.addEventListener('change', async (e) => {
+        await updateBookShelf(book.id, e.target.value);
       });
 
-      shelfGroup.appendChild(booksDiv);
+      const favoriteBtn = article.querySelector('.btn-favorite');
+      favoriteBtn.addEventListener('click', async () => {
+        await toggleFavorite(book.id, book.starred);
+      });
+
+      const deleteBtn = article.querySelector('.btn-delete');
+      deleteBtn.addEventListener('click', async () => {
+        if (confirm(`Delete "${book.title}"?`)) {
+          await deleteBook(book.id);
+        }
+      });
     }
 
-    readingListDiv.appendChild(shelfGroup);
+    readingListDiv.appendChild(article);
   });
-
-  // Update goal display after rendering
-  updateGoalDisplay();
 }
 
 // ========================================
@@ -631,114 +620,6 @@ function updateStats(books) {
 }
 
 // ========================================
-// Function: initializeShelves
-// ========================================
-
-function initializeShelves() {
-  const stored = localStorage.getItem(SHELVES_STORAGE_KEY);
-  if (!stored) {
-    localStorage.setItem(SHELVES_STORAGE_KEY, JSON.stringify(DEFAULT_SHELVES));
-  }
-}
-
-// ========================================
-// Function: getShelves
-// ========================================
-
-function getShelves() {
-  const stored = localStorage.getItem(SHELVES_STORAGE_KEY);
-  return stored ? JSON.parse(stored) : DEFAULT_SHELVES;
-}
-
-// ========================================
-// Function: addShelf
-// ========================================
-
-function addShelf(shelfName) {
-  const shelves = getShelves();
-  if (!shelves.includes(shelfName)) {
-    shelves.push(shelfName);
-    localStorage.setItem(SHELVES_STORAGE_KEY, JSON.stringify(shelves));
-  }
-}
-
-// ========================================
-// Function: removeShelf
-// ========================================
-
-function removeShelf(shelfName) {
-  // Don't allow removing default shelves
-  if (DEFAULT_SHELVES.includes(shelfName)) {
-    alert('Cannot remove default shelves');
-    return;
-  }
-  const shelves = getShelves();
-  const index = shelves.indexOf(shelfName);
-  if (index > -1) {
-    shelves.splice(index, 1);
-    localStorage.setItem(SHELVES_STORAGE_KEY, JSON.stringify(shelves));
-    // Move books from removed shelf to "Want to Read"
-    moveShelfBooks(shelfName, 'Want to Read');
-  }
-}
-
-// ========================================
-// Function: moveShelfBooks
-// ========================================
-
-async function moveShelfBooks(oldShelf, newShelf) {
-  if (!currentUser) {
-    return;
-  }
-
-  try {
-    const snapshot = await getDocs(getUserCollection());
-    snapshot.forEach(async (docSnap) => {
-      if (docSnap.data().shelf === oldShelf) {
-        await updateDoc(doc(getUserCollection(), docSnap.id), { shelf: newShelf });
-      }
-    });
-  } catch (error) {
-    console.error('Error moving shelf books:', error);
-  }
-}
-
-// ========================================
-// Function: renderShelves
-// ========================================
-
-function renderShelves() {
-  const shelves = getShelves();
-  shelvesList.innerHTML = '';
-
-  shelves.forEach(shelf => {
-    const tag = document.createElement('div');
-    tag.className = 'shelf-tag';
-    if (DEFAULT_SHELVES.includes(shelf)) {
-      tag.classList.add('default');
-    }
-    tag.innerHTML = `
-      ${shelf}
-      ${!DEFAULT_SHELVES.includes(shelf) ? '<button class="remove-shelf" aria-label="Remove shelf">×</button>' : ''}
-    `;
-
-    if (!DEFAULT_SHELVES.includes(shelf)) {
-      const removeBtn = tag.querySelector('.remove-shelf');
-      removeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (confirm(`Remove shelf "${shelf}"? Books will move to "Want to Read".`)) {
-          removeShelf(shelf);
-          renderShelves();
-          loadReadingList();
-        }
-      });
-    }
-
-    shelvesList.appendChild(tag);
-  });
-}
-
-// ========================================
 // Function: buildCoverUrl
 // ========================================
 
@@ -761,50 +642,10 @@ function placeholderEl() {
 }
 
 // ========================================
-// Function: saveReadingGoal
-// ========================================
-
-function saveReadingGoal(target) {
-  localStorage.setItem('readingGoal', JSON.stringify({ target, setAt: new Date().toISOString() }));
-}
 
 // ========================================
-// Function: loadReadingGoal
-// ========================================
-
-function loadReadingGoal() {
-  const goalData = localStorage.getItem('readingGoal');
-  if (goalData) {
-    updateGoalDisplay();
-  }
-}
 
 // ========================================
-// Function: updateGoalDisplay
-// ========================================
-
-function updateGoalDisplay() {
-  const goalData = localStorage.getItem('readingGoal');
-  if (!goalData) {
-    goalDisplay.style.display = 'none';
-    return;
-  }
-
-  const { target } = JSON.parse(goalData);
-  goalDisplay.style.display = 'block';
-
-  // Count books in "Read" shelf
-  const readBooks = Array.from(readingListDiv.querySelectorAll('.shelf-select')).filter(select => select.value === 'Read').length;
-  const percentage = Math.min((readBooks / target) * 100, 100);
-
-  progressBar.style.width = percentage + '%';
-  goalProgress.textContent = `${readBooks} / ${target} books read`;
-
-  // Optional: Add celebration emoji when goal is reached
-  if (readBooks >= target) {
-    goalProgress.textContent = `🎉 ${readBooks} / ${target} books read - Goal Achieved!`;
-  }
-}
 
 // ========================================
 // Helper: escapeHtml
